@@ -30,6 +30,7 @@ import {
 } from "@material-ui/icons";
 import firebase from "../../services/firebase";
 import TodoItemList from "../../components/todoItemList";
+import CardLayout from "../../components/CardLayout";
 
 const drawerWidth = 240;
 
@@ -148,6 +149,10 @@ function useTodoLists(currentUserId) {
   const [todoLists, setTodoLists] = React.useState([]);
 
   useEffect(() => {
+    console.log("todo List:", { todoLists });
+  }, [todoLists]);
+
+  useEffect(() => {
     firebase
       .firestore()
       .collection(currentUserId)
@@ -203,9 +208,8 @@ function HomePage(props) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     // firebase.getCurrentUserQuote().then(setQuote)
-    console.log("AAAAAAAAAUse Effect Worked.!!AAAAAAAAAAAAA");
     console.log(todoLists);
-    console.log(selectedList);
+    console.log("selectedList", selectedList);
     if (!selectedList) {
       handleListItemClick(todoLists[0], 0);
     }
@@ -221,6 +225,10 @@ function HomePage(props) {
       });
     }
   });
+
+  /* useEffect(() => {
+    console.log("selected List ******", selectedList)
+  }) */
 
   const handleListItemClick = (list, index) => {
     setSelectedIndex(index);
@@ -278,7 +286,7 @@ function HomePage(props) {
       setSelectedListEditItemIndex(3.14);
     } else {
       alert(
-        "Lütfen formu tekrar kontrol ediniz, ve eksik alan kalmadığından emin olunuz."
+        "Please check the form again, and make sure that there is no missing space."
       );
     }
   };
@@ -299,7 +307,7 @@ function HomePage(props) {
       setShowNewTodoDialog(false);
     } else {
       alert(
-        "Lütfen formu tekrar kontrol ediniz, ve eksik alan kalmadığından emin olunuz."
+        "Please check the form again, and make sure that there is no missing space."
       );
     }
   };
@@ -320,7 +328,7 @@ function HomePage(props) {
         });
     } else {
       alert(
-        "Lütfen formu tekrar kontrol ediniz, ve eksik alan kalmadığından emin olunuz."
+        "Please check the form again, and make sure that there is no missing space."
       );
     }
   };
@@ -364,7 +372,7 @@ function HomePage(props) {
               onChange={(event) => (title = event.target.value)}
               margin="dense"
               id="todo-title"
-              label="Todo Başlığı"
+              label="Todo Title"
               type="text"
               fullWidth
             />
@@ -374,7 +382,7 @@ function HomePage(props) {
               onChange={(event) => (detail = event.target.value)}
               margin="dense"
               id="todo-detail"
-              label="Todo Detayı"
+              label="Todo Detail"
               type="text"
               fullWidth
             />
@@ -382,7 +390,7 @@ function HomePage(props) {
               defaultValue={date}
               onChange={(event) => (date = event.target.value)}
               id="todo-datetime"
-              label="Son Tarih"
+              label="Deadline"
               type="datetime-local"
               // defaultValue="2020-05-16T18:30"
               className={classes.textField}
@@ -423,7 +431,7 @@ function HomePage(props) {
 
     return (
       <Dialog open={showNewTodoDialog} aria-labelledby="form-dialog-title">
-        <DialogTitle id="form-dialog-title">Todo Item Ekle</DialogTitle>
+        <DialogTitle id="form-dialog-title">Todo Add Item</DialogTitle>
         <DialogContent>
           <DialogContentText>
             To add a Todo Item, enter the required information and click SAVE.
@@ -434,7 +442,7 @@ function HomePage(props) {
             onChange={(event) => (title = event.target.value)}
             margin="dense"
             id="todo-title"
-            label="Todo Başlığı"
+            label="Todo Title"
             type="text"
             fullWidth
           />
@@ -444,7 +452,7 @@ function HomePage(props) {
             onChange={(event) => (detail = event.target.value)}
             margin="dense"
             id="todo-detail"
-            label="Todo Detayı"
+            label="Todo Detail"
             type="text"
             fullWidth
           />
@@ -452,7 +460,7 @@ function HomePage(props) {
             defaultValue={date}
             onChange={(event) => (date = event.target.value)}
             id="todo-datetime"
-            label="Son Tarih"
+            label="Deadline"
             type="datetime-local"
             // defaultValue="2020-05-16T18:30"
             className={classes.textField}
@@ -463,13 +471,13 @@ function HomePage(props) {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowNewTodoDialog(false)} color="primary">
-            Kapat
+            Cancel
           </Button>
           <Button
             onClick={() => saveNewTodo(title, detail, date)}
             color="primary"
           >
-            Kaydet
+            Save
           </Button>
         </DialogActions>
       </Dialog>
@@ -482,7 +490,7 @@ function HomePage(props) {
 
     return (
       <Dialog open={showNewListDialog} aria-labelledby="form-dialog-title">
-        <DialogTitle id="form-dialog-title">Todo List Ekle</DialogTitle>
+        <DialogTitle id="form-dialog-title">Todo List Title</DialogTitle>
         <DialogContent>
           <DialogContentText>
             Enter the title of Todo List and click Save.
@@ -493,7 +501,7 @@ function HomePage(props) {
             onChange={(event) => (title = event.target.value)}
             margin="dense"
             id="todo-title"
-            label="Todo List Başlığı"
+            label="Todo List Title"
             type="text"
             fullWidth
           />
@@ -541,7 +549,7 @@ function HomePage(props) {
       return (
         <div>
           <span className={classes.emptyListText}>
-            Kayıtlı bir Todo List bulunmamakta.
+            There is no Todo List registered.
           </span>
         </div>
       );
@@ -552,74 +560,49 @@ function HomePage(props) {
     <div className={classes.root}>
       <CssBaseline />
       <AppBar
-        style={{ backgroundColor: "lightgrey" }}
+        style={{ backgroundColor: "whiteSmoke" }}
         position="fixed"
         className={classes.appBar}
       >
-        <Toolbar style={{display: "flex", justifyContent: "space-between"}}>
-          <Typography variant="h6" noWrap>
+        <Toolbar style={{ display: "flex", justifyContent: "space-between" }}>
+          <Typography style={{ color: "darkgray" }} variant="h6" noWrap>
             Todo List
           </Typography>
-          <div>
-            <Button
-              variant="outlined"
-              color="secondary"
-              className={classes.button}
-              onClick={logout}
-              startIcon={<LogOutIcon />}
-            >
-              Sign out
-            </Button>
-            <Typography variant="h6" noWrap>
+          <div style={{ display: "flex" }}>
+            <Typography style={{ color: "darkgray" }} variant="h6" noWrap>
               {currentUserName}
             </Typography>
+            &nbsp; &nbsp; &nbsp;
+            <Button variant="outlined" color="secondary" onClick={logout}>
+              Sign out
+            </Button>
           </div>
         </Toolbar>
       </AppBar>
 
-      <Drawer
-        className={classes.drawer}
-        variant="permanent"
-        classes={{
-          paper: classes.drawerPaper,
-        }}
-        open={true}
-      >
-        <Toolbar />
-        <div className={classes.drawerContainer}>
-          <List>
-            <ListItem button onClick={() => setTodoListsOpen(!todoListsOpen)}>
-              <ListItemIcon>
-                <AssignmentIcon />
-              </ListItemIcon>
-              <ListItemText primary="Todo Listem" />
-              {todoListsOpen ? <ExpandLess /> : <ExpandMore />}
-            </ListItem>
-            <Collapse in={todoListsOpen} timeout="auto" unmountOnExit>
-              <List component="div" disablePadding>
-                {renderLists()}
-              </List>
-              <Button
-                variant="outlined"
-                color="primary"
-                size="small"
-                className={classes.addTodoListButton}
-                onClick={() => addTodoList()}
-                startIcon={<AddIcon />}
-              >
-                Add Todo List
-              </Button>
-            </Collapse>
-          </List>
-        </div>
-      </Drawer>
       <main className={classes.content}>
         <div className={classes.appBarSpacer} />
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <Button
+            style={{ width: "200px", marginTop: "22px" }}
+            variant="outlined"
+            color="primary"
+            size="small"
+            className={classes.addTodoListButton}
+            onClick={() => addTodoList()}
+            startIcon={<AddIcon />}
+          >
+            Add Todo List
+          </Button>
+        </div>
         <TodoItemList
           list={selectedList ? selectedList : {}}
           updateTodoList={(list) => updateTodoList(list)}
           openEditDialog={(list, index) => openEditTodoDialog(list, index)}
           openNewTodoDialog={() => openNewTodoDialog()}
+          lists={todoLists}
+          setSelectedList={setSelectedList}
+          currentUserId={currentUserId}
         />
       </main>
 

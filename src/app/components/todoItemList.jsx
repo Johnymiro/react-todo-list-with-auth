@@ -19,6 +19,13 @@ import {
   ExpandMore as ExpandMoreIcon,
   Search as SearchIcon,
 } from "@material-ui/icons";
+import { ListGroup, ListGroupItem } from "reactstrap";
+import Divider from "@material-ui/core/Divider";
+import Button from "@material-ui/core/Button";
+import DoneIcon from "@material-ui/icons/Done";
+import CancelIcon from "@material-ui/icons/Cancel";
+import CardLayout from "./CardLayout";
+import firebase from "../services/firebase";
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -110,10 +117,10 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   addTodoItemButton: {
-    display: "block",
+    /* display: "block",
     outline: "0 !important",
     margin: "auto",
-    marginTop: 5,
+    marginTop: 5, */
   },
   addTodoItemButtonIcon: {
     color: "#67af50",
@@ -169,42 +176,225 @@ function TodoItemList(props) {
     props.openEditDialog(list, index);
   };
 
-  const removeTodo = (event, list, index) => {
+  const removeTodo = (event, todo, list) => {
     event.stopPropagation();
-    lists.splice(index, 1);
-    props.updateTodoList({ name: props.list.name, todoList: lists });
+
+    const newList = list.todoList.filter((item) => {
+      if (item.name === todo.name) {
+        return false;
+      }
+      return true;
+    });
+    firebase
+      .firestore()
+      .collection(props.currentUserId)
+      .doc(list.id)
+      .set({
+        name: list.name,
+        todoList: newList,
+      })
+      .then((e) => {
+        console.log(e);
+      });
   };
 
-  const checkboxToggle = (event, list) => {
+  const checkboxToggle = (event, todo, list) => {
     event.stopPropagation();
-    list.isComplete = !list.isComplete;
-    props.updateTodoList({ name: props.list.name, todoList: lists });
+    const newList = list.todoList.map((item) => {
+      if (item.name === todo.name) {
+        return { ...todo, isComplete: !todo.isComplete };
+      }
+      return item;
+    });
+    console.log({ list, todo, currentUser: props.currentUser });
+    /*  props.updateTodoList({
+      name: props.list.name,
+      todoList: newList,
+    }); */
+    firebase
+      .firestore()
+      .collection(props.currentUserId)
+      .doc(list.id)
+      .set(
+        {
+          name: list.name,
+          todoList: newList,
+        },
+        { merge: true }
+      )
+      .then((e) => {
+        console.log(e);
+      });
+  };
+
+  const deleteCard = (event, list) => {
+    event.stopPropagation();
+    firebase.firestore()
+      .collection(props.currentUserId)
+      .doc(list.id)
+      .delete()
+      .then((e) => {
+        console.log("deleted", list.name);
+      });
   };
 
   if (props.list.id) {
     return (
       <Container maxWidth="lg" className={classes.container}>
-        <h2>{props.list.name}</h2>
-        <div className={classes.filterArea}>
-          <div className={classes.search}>
-            <div className={classes.searchIcon}>
-              <SearchIcon />
-            </div>
-            <InputBase
-              placeholder="Search…"
-              onChange={(text) => {
-                setSearchText(text.target.value);
-              }}
-              value={searchText}
-              classes={{
-                root: classes.inputRoot,
-                input: classes.inputInput,
-              }}
-              inputProps={{ "aria-label": "search" }}
-            />
-          </div>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+          }}
+        >
+          {props.lists?.map((list, index) => {
+            return (
+              <CardLayout
+                deleteCard={(e) => deleteCard(e, list)}
+                key={index}
+                title={list.name}
+                Component={() => {
+                  return (
+                    <Button
+                      aria-label="edit"
+                      className={classes.addTodoItemButton}
+                      onClick={(event) => {
+                        console.log("selecting list", list);
+                        props.setSelectedList(list);
+                        props.openNewTodoDialog();
+                      }}
+                      color="primary"
+                      variant="contained"
+                    >
+                      Add Todo
+                    </Button>
+                  );
+                }}
+              >
+                {list.todoList?.length > 0 ? (
+                  <>
+                    <h3>To Do</h3>
+                    <ListGroup>
+                      {list.todoList
+                        .filter((e) => !e.isComplete)
+                        .map((todo, i) => {
+                          return (
+                            <ListGroupItem key={i} color="info">
+                              <div style={{ display: "flex" }}>
+                                <div style={{ flexGrow: "4" }}>
+                                  <h4>{todo.name}</h4>
+                                  <p>{todo.detail}</p>
+                                  <div>
+                                    <b>Created: </b>
+                                    <span>
+                                      {calculateFullDate(todo.createDate).date}{" "}
+                                      -{" "}
+                                    </span>
+                                    <span>
+                                      [
+                                      {calculateFullDate(todo.createDate).clock}
+                                      ]
+                                    </span>
+                                  </div>
+                                 {/*  <div>
+                                    <b>Finish Date: </b>
+                                    <span>
+                                      {calculateFullDate(todo.date).date} -{" "}
+                                    </span>
+                                    <span>
+                                      [{calculateFullDate(todo.date).clock}]
+                                    </span>
+                                  </div> */}
+                                </div>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                  }}
+                                >
+                                  <IconButton
+                                    onClick={(e) => {
+                                      props.setSelectedList(list);
+                                      checkboxToggle(e, todo, list);
+                                    }}
+                                  >
+                                    <DoneIcon />
+                                  </IconButton>
+                                  {/* <IconButton>
+                                    <EditIcon />
+                                  </IconButton> */}
+                                  <IconButton
+                                    onClick={(e) => {
+                                      props.setSelectedList(list);
+                                      removeTodo(e, todo, list);
+                                    }}
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </div>
+                              </div>
+                            </ListGroupItem>
+                          );
+                        })}
+                    </ListGroup>
+                    <div style={{ margin: "5px 0 5px 0" }}>
+                      <Divider />
+                    </div>
+                    <h3>Done</h3>
+                    <ListGroup>
+                      {list.todoList
+                        .filter((e) => e.isComplete)
+                        .map((todo, i) => {
+                          return (
+                            <ListGroupItem key={i} color="success">
+                              <div style={{ display: "flex" }}>
+                                <div style={{ flexGrow: "4" }}>
+                                  <h4>{todo.name}</h4>
+                                  <p>{todo.detail}</p>
+                                  <b>Created: </b>
+                                  <span>
+                                    {calculateFullDate(todo.date).date} -{" "}
+                                  </span>
+                                  <span>
+                                    [{calculateFullDate(todo.date).clock}]
+                                  </span>
+                                </div>
+
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  <IconButton
+                                    onClick={(e) => {
+                                      props.setSelectedList(list);
+                                      checkboxToggle(e, todo, list);
+                                    }}
+                                  >
+                                    <CancelIcon />
+                                  </IconButton>
+                                  {/* <IconButton>
+                                    <EditIcon />
+                                  </IconButton> */}
+                                </div>
+                              </div>
+                            </ListGroupItem>
+                          );
+                        })}
+                    </ListGroup>
+                  </>
+                ) : (
+                  <h5>No todo item</h5>
+                )}
+              </CardLayout>
+            );
+          })}
         </div>
-        {props.list.todoList.length > 0 && (
+
+        {/*       {props.list.todoList.length > 0 && (
           <div className={classes.root}>
             {filteredLists.map((list, index) => {
               const fullDate = calculateFullDate(list.date);
@@ -261,32 +451,22 @@ function TodoItemList(props) {
               );
             })}
           </div>
-        )}
-        {props.list.todoList.length === 0 && (
+        )} */}
+        {props.lists.length === 0 && (
           <div>
             <h5 style={{ textAlign: "center", padding: 25 }}>
               There is no to do Item in your list. You can add Todo Item.
-
             </h5>
           </div>
         )}
-        <IconButton
-          aria-label="edit"
-          className={classes.addTodoItemButton}
-          onClick={(event) => {
-            props.openNewTodoDialog();
-          }}
-        >
-          <AddCircleOutlineIcon className={classes.addTodoItemButtonIcon} />
-        </IconButton>
       </Container>
     );
   } else {
     return (
       <div>
         <h3 style={{ textAlign: "center", padding: 25 }}>
-          Kayıtlı bir Todo List bulunamadı, lütfen sol menüden ilk Todo
-          List'inizi ekleyin.
+          No saved Todo List found, please first Todo from left menu Add your
+          list.
         </h3>
       </div>
     );
