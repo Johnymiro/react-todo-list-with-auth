@@ -4,7 +4,13 @@
 /node_modules
 /.pnp
 .pnp.js
-
+/functions
+/.firebase
+.firebaserc
+.database.rules.json
+.firebase.json
+.firestore.indexes.json
+.firestore.rules
 # testing
 /coverage
 
